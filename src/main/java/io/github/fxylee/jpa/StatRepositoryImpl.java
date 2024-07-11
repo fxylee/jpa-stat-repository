@@ -3,12 +3,10 @@ package io.github.fxylee.jpa;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
 import javax.persistence.Query;
@@ -17,12 +15,10 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Root;
 import javax.persistence.criteria.Selection;
 import lombok.SneakyThrows;
 import org.hibernate.query.criteria.internal.CriteriaBuilderImpl;
-import org.hibernate.query.criteria.internal.OrderImpl;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
@@ -31,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.convert.QueryByExamplePredicateBuilder;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.query.QueryUtils;
 import org.springframework.data.jpa.repository.support.JpaEntityInformation;
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.data.repository.NoRepositoryBean;
@@ -220,7 +217,7 @@ public class StatRepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID>
 
     Optional.ofNullable(spec).map(s -> s.toPredicate(root, query, builder)).ifPresent(query::where);
 
-    query.orderBy(getOrders(sort, builder, root, rClass));
+    query.orderBy(QueryUtils.toOrders(sort, root, builder));
 
     return query;
   }
@@ -239,26 +236,6 @@ public class StatRepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID>
     }
 
     return entityManager.createQuery(totalQuery).getSingleResult();
-  }
-
-  private <R> List<Order> getOrders(Sort sort, CriteriaBuilder builder, Root<T> root,
-                                    Class<R> pojo) {
-    if (sort.isUnsorted()) {
-      return Collections.emptyList();
-    }
-
-    return sort.stream().map(order -> {
-      try {
-        Field field = pojo.getDeclaredField(order.getProperty());
-        return new OrderImpl(getExpression(field, builder, root), order.isAscending());
-      } catch (NoSuchFieldException e) {
-        e.printStackTrace();
-      }
-
-      return null;
-    })
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
   }
 
   private List<Expression<?>> getMetrics(Field[] fields, CriteriaBuilder builder, Root<T> root) {
