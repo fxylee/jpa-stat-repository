@@ -367,4 +367,25 @@ public class StatRepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID>
 
     return applyRepositoryMethodMetadata(entityManager.createQuery(query)).getResultList();
   }
+
+  @Override
+  public Page<T> page(Pageable pageable) {
+    return page(null, pageable);
+  }
+
+  @Override
+  public Page<T> page(Specification<T> spec, Pageable pageable) {
+    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+    CriteriaQuery<T> query = builder.createQuery(fromEntity);
+    Root<T> root = query.from(fromEntity);
+    query.select(root);
+    Optional.ofNullable(spec).map(s -> s.toPredicate(root, query, builder)).ifPresent(query::where);
+    Sort sort = pageable.isPaged() ? pageable.getSort() : Sort.unsorted();
+    query.orderBy(Utils.toOrders(sort, root, builder));
+
+    TypedQuery<T> typedQuery = applyRepositoryMethodMetadata(entityManager.createQuery(query));
+    return pageable.isUnpaged()
+        ? new PageImpl<>(typedQuery.getResultList())
+        : readPage(typedQuery, fromEntity, pageable, spec);
+  }
 }

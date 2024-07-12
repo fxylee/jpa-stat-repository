@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.NoRepositoryBean;
+import org.springframework.lang.Nullable;
 
 //CHECKSTYLE:OFF
 @NoRepositoryBean
@@ -85,4 +86,8 @@ public interface StatRepository<T, ID> {
    * 查询单个字段
    */
   <R> List<R> pick(String attr, Example<T> example);
+
+  Page<T> page(Pageable pageable);
+
+  Page<T> page(@Nullable Specification<T> spec, Pageable pageable);
 }
