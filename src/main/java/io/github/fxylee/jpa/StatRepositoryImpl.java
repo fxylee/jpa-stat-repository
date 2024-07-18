@@ -3,6 +3,7 @@ package io.github.fxylee.jpa;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -308,6 +309,47 @@ public class StatRepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID>
     } else {
       return root.get(field.getName());
     }
+  }
+
+  @Override
+  public Map<ID, T> tuple(Collection<ID> ids) {
+    return tuple((root, query, cb) -> {
+      CriteriaBuilder.In<ID> idIn = cb.in(root.get(idName));
+      ids.forEach(idIn::value);
+
+      return query.where(idIn).getRestriction();
+    });
+  }
+
+  @SneakyThrows
+  @SuppressWarnings("unchecked")
+  @Override
+  public Map<ID, T> tuple(Specification<T> spec) {
+    Field idField = fromEntity.getDeclaredField(idName);
+    idField.setAccessible(true);
+
+    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+    CriteriaQuery<T> query = builder.createQuery(fromEntity);
+    Root<T> root = query.from(fromEntity);
+
+    query.select(root);
+    Optional.ofNullable(spec).map(s -> s.toPredicate(root, query, builder)).ifPresent(query::where);
+    List<T> rows = entityManager.createQuery(query).getResultList();
+
+    return rows
+        .stream()
+        .collect(Utils.<T, ID, T>toMap(
+            row -> {
+              try {
+                Object o = idField.get(row);
+                return (ID) o;
+              } catch (IllegalAccessException e) {
+                e.printStackTrace();
+              }
+              return null;
+            },
+            row -> row
+        ));
   }
 
   @SneakyThrows(NoSuchFieldException.class)

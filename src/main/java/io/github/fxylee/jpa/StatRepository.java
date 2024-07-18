@@ -1,5 +1,6 @@
 package io.github.fxylee.jpa;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,6 +52,10 @@ public interface StatRepository<T, ID> {
   <R> List<R> stat(Class<R> rClass, Specification<T> spec, Sort sort);
 
   <R> Page<R> stat(Class<R> rClass, Specification<T> spec, Pageable pageable);
+
+  Map<ID, T> tuple(Specification<T> spec);
+
+  Map<ID, T> tuple(Collection<ID> ids);
 
   /**
    * 查询keyAttr 和 valueAttr 两个字段，并自动包装为Map结构
