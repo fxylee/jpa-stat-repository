@@ -312,6 +312,13 @@ public class StatRepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID>
   }
 
   @Override
+  public Map<ID, T> tuple() {
+    return tuple((root, query, cb) -> {
+      return query.getRestriction();
+    });
+  }
+
+  @Override
   public Map<ID, T> tuple(Collection<ID> ids) {
     return tuple((root, query, cb) -> {
       CriteriaBuilder.In<ID> idIn = cb.in(root.get(idName));

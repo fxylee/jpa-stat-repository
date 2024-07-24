@@ -53,9 +53,11 @@ public interface StatRepository<T, ID> {
 
   <R> Page<R> stat(Class<R> rClass, Specification<T> spec, Pageable pageable);
 
-  Map<ID, T> tuple(Specification<T> spec);
+  Map<ID, T> tuple();
 
   Map<ID, T> tuple(Collection<ID> ids);
+
+  Map<ID, T> tuple(Specification<T> spec);
 
   /**
    * 查询keyAttr 和 valueAttr 两个字段，并自动包装为Map结构
