@@ -83,6 +83,35 @@ public class StatRepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID>
   @SneakyThrows
   @SuppressWarnings("unchecked")
   @Override
+  public <V> V max(String attr, Specification<T> spec) {
+    Field valueField = fromEntity.getDeclaredField(attr);
+    Class<V> valueClass = (Class<V>) valueField.getType();
+
+    return Optional.ofNullable(builder(Tuple.class).max(attr).where(spec).getSingleResult())
+        .map(tuple -> tuple.get(0, valueClass))
+        .orElse(null);
+  }
+
+  @SneakyThrows
+  @SuppressWarnings("unchecked")
+  @Override
+  public <K, V> Map<K, V> max(String keyAttr, String valueAttr, Specification<T> spec) {
+    Field keyField = fromEntity.getDeclaredField(keyAttr);
+    Class<K> keyClass = (Class<K>) keyField.getType();
+    Field valueField = fromEntity.getDeclaredField(valueAttr);
+    Class<V> valueClass = (Class<V>) valueField.getType();
+
+    return applyRepositoryMethodMetadata(
+        builder(Tuple.class).max(valueAttr).groupBy(keyAttr).where(spec).createQuery()
+    )
+        .getResultList()
+        .stream()
+        .collect(Utils.toMap(x -> x.get(0, keyClass), x -> x.get(1, valueClass)));
+  }
+
+  @SneakyThrows
+  @SuppressWarnings("unchecked")
+  @Override
   public <V> V sum(String attr, Specification<T> spec) {
     Field valueField = fromEntity.getDeclaredField(attr);
     Class<V> valueClass = (Class<V>) valueField.getType();
