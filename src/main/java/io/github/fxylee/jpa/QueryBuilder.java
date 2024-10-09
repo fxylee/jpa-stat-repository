@@ -56,6 +56,11 @@ public final class QueryBuilder<T, R> {
     return this;
   }
 
+  public QueryBuilder<T, R> min(String attr) {
+    metrics.add(criteriaBuilder.min(root.get(attr)));
+    return this;
+  }
+
   public QueryBuilder<T, R> max(String attr) {
     metrics.add(criteriaBuilder.max(root.get(attr)));
     return this;

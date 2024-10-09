@@ -17,6 +17,13 @@ import org.springframework.lang.Nullable;
 public interface StatRepository<T, ID> {
   <R> QueryBuilder<T, R> builder(Class<R> rClass);
 
+  <V> V min(String attr, Specification<T> spec);
+
+  /**
+   * 按 keyAttr group by 后，min valueAttr
+   */
+  <K, V> Map<K, V> min(String keyAttr, String valueAttr, Specification<T> spec);
+
   <V> V max(String attr, Specification<T> spec);
 
   /**
