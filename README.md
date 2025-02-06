@@ -24,24 +24,44 @@ public interface EntityRepository  extends StatRepository<Entity, ID> {
 
 Step 3.
 ```java
+import java.util.Map;
 import java.util.List;
 import javax.annotation.Resource;
+import javax.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 
-@Ser
+@Service
 public class BizService {
   @Resource
   private EntityRepository entityRepository;
 
+  /**
+   * Note: 
+   * keyPath is the property of entity
+   */
   public List<String> getAll() {
-    entityRepository.pick(
-      "keyPath", // the property of entity
-      (root, query, cb) -> {
-        List<Predicate> filters = new ArrayList<>();
-        // some criteria query
+    return entityRepository.pick("keyPath", getSpec());
+  }
+  
+  public Map<String, String> getCodeNameMap() {
+    return entityRepository.tuple("codeKeyPath", "nameKeyPath", getSpec());
+  }
 
-        return query.where(filters.toArray(new Predicate[0])).getRestriction();
-      }
-    );
+  public Long getTotal() {
+    return entityRepository.sum("keyPath", getSpec());
+  }
+
+  public Long getMaxId() {
+    return entityRepository.max("idPath", getSpec());
+  }
+
+  private <T> Specification<T> getSpec() {
+    return (root, query, cb) -> {
+      List<Predicate> filters = new ArrayList<>();
+      // some criteria query
+
+      return query.where(filters.toArray(new Predicate[0])).getRestriction();
+    };
   }
 }
 ```
